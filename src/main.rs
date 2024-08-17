@@ -7,7 +7,8 @@ use utils::input::Input;
 use renderer::Renderer;
 use ui::AppUI;
 use utils::TimerUtil;
-use std::{f64, time::{SystemTime, UNIX_EPOCH}};
+use std::{f64::consts::PI, f64, time::{SystemTime, UNIX_EPOCH}};
+use chsl::{math::{matrix::Matrix, vector2::Vector2}, physics::{bounding_box::BoundingBox, rigidbody::Collider, world::PhysicsWorld}};
 
 pub fn loop_with_dt<F: FnMut(f64) -> bool>(mut tick: F) {
     let mut last_time = SystemTime::now().duration_since(UNIX_EPOCH).unwrap();
@@ -19,6 +20,55 @@ pub fn loop_with_dt<F: FnMut(f64) -> bool>(mut tick: F) {
 
         if !tick(dt.as_secs_f64()) {
             return;
+        }
+    }
+}
+
+trait DebugRender {
+    fn debug_render(&mut self, renderer: &mut Renderer);
+}
+
+impl DebugRender for PhysicsWorld {
+    fn debug_render(&mut self, renderer: &mut Renderer) {
+        for (_, body) in self.bodies.iter_mut() {
+            let mut points = vec![];
+
+            match &body.collider {
+                Collider::Circle { radius } => {
+                    let mut angle: f64 = 0.0;
+                    let iterations: f64 = 16.0;
+
+                    for _ in 0..iterations as usize {
+                        angle += PI * 2.0 / iterations;
+                        points.push(Vector2::new(angle.sin() * radius, angle.cos() * radius))
+                    }
+                }
+
+                Collider::Polygon { vertices } => {
+                    points.append(&mut vertices.clone()); 
+                }
+            }
+
+            let transform = Matrix::new().scale(body.scale).rot(body.rotation);
+            
+            for point in points.iter_mut() {
+                *point = transform.vec_mul(point);
+            }
+            
+            let mut last = &points[points.len()-1];
+            
+            for i in 0..points.len() {
+                let current = &points[i];
+                
+                renderer.set_color(0, 0, 0, 255);
+
+                let a = *last + body.position;
+                let b = *current + body.position;
+
+                renderer.line(a.x as i32, a.y as i32, b.x as i32, b.y as i32);
+
+                last = current;
+            }
         }
     }
 }

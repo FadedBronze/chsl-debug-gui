@@ -8,13 +8,12 @@ use core::f64;
 use std::u32;
 
 use button::ClickElement;
-use crate::utils::input::Input;
+use chsl::{math::vector2::Vector2, physics::{bounding_box::BoundingBox, rigidbody::RigidBody}};
+use crate::{renderer::Renderer, utils::input::Input};
 use number_text::NumberTextInput;
 use sdl2::mouse::MouseButton;
 use text::Text;
 use toggle::ToggleGroup;
-
-use crate::{math::vector2::Vector2, physics::{bounding_box::BoundingBox, rigidbody::RigidBody}, renderer::Renderer};
 
 const PADDING: u32 = 20;
 

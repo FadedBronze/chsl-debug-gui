@@ -1,8 +1,9 @@
 use std::collections::HashMap;
 
+use chsl::{math::vector2::Vector2, physics::{bounding_box::BoundingBox, rigidbody::RigidBody, world::PhysicsWorld}};
 use sdl2::mouse::MouseButton;
 
-use crate::{gui::{button::ClickElement, mouse_over_panel, number_text::NumberTextInput, text::Text, text_input::TextInput, toggle::ToggleGroup, DebugGui, DebugGuiLayout, Panel, RigidBodyDebugGui}, math::vector2::Vector2, panel, physics::{bounding_box::BoundingBox, constraint::FixedJoint, rigidbody::RigidBody, world::PhysicsWorld}, renderer::Renderer, utils::input::Input};
+use crate::{gui::{button::ClickElement, mouse_over_panel, number_text::NumberTextInput, text::Text, text_input::TextInput, toggle::ToggleGroup, DebugGui, DebugGuiLayout, Panel, RigidBodyDebugGui}, panel, renderer::Renderer, utils::input::Input};
 
 pub enum UIPlaceBodyType {
     Circle,
@@ -86,7 +87,10 @@ impl AppUI {
 
         for (id, body) in physics_world.bodies.iter_mut() {
             if !self.rigidbody_panels.contains_key(id) {
-                self.rigidbody_panels.insert(id.clone(), body.debug_gui(Vector2::zero(), &("Rigidbody Panel".to_string() + id)));
+                self.rigidbody_panels.insert(
+                    id.clone(), 
+                    body.debug_gui(Vector2::zero(), &("Rigidbody Panel".to_string() + id))
+                );
             }
 
             let panel = self.rigidbody_panels.get_mut(id).unwrap();
