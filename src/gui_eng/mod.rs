@@ -85,7 +85,7 @@ impl Panel {
     }
 
     pub fn new(bounds: BoundingBox, name: &str) -> Panel {
-        Panel { bounds, hidden: false, drag_origin: None, y_offset: PADDING as i32 / 2, name: name.to_string() }
+        Panel { bounds, hidden: true, drag_origin: None, y_offset: PADDING as i32 / 2, name: name.to_string() }
     }
 
     pub fn drag_start(&mut self, input: &Input) {
