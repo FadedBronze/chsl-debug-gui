@@ -1,11 +1,11 @@
+mod gui_eng;
 mod gui;
-mod ui;
 mod utils;
 mod renderer;
 
 use utils::input::Input;
 use renderer::Renderer;
-use ui::AppUI;
+use gui::AppUI;
 use utils::TimerUtil;
 use std::{f64::consts::PI, f64, time::{SystemTime, UNIX_EPOCH}};
 use chsl::{math::{matrix::Matrix, vector2::Vector2}, physics::{bounding_box::BoundingBox, rigidbody::Collider, world::PhysicsWorld}};
@@ -30,7 +30,7 @@ trait DebugRender {
 
 impl DebugRender for PhysicsWorld {
     fn debug_render(&mut self, renderer: &mut Renderer) {
-        for (_, body) in self.bodies.iter_mut() {
+        for (_, body) in self.all_bodies().iter_mut() {
             let mut points = vec![];
 
             match &body.collider {
