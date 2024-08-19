@@ -7,7 +7,7 @@ use utils::input::Input;
 use renderer::Renderer;
 use gui::AppUI;
 use utils::TimerUtil;
-use std::{f64::consts::PI, f64, time::{SystemTime, UNIX_EPOCH}};
+use std::{f64::{self, consts::PI}, time::{SystemTime, UNIX_EPOCH}};
 use chsl::{math::{matrix::Matrix, vector2::Vector2}, physics::{bounding_box::BoundingBox, rigidbody::Collider, world::PhysicsWorld}};
 
 pub fn loop_with_dt<F: FnMut(f64) -> bool>(mut tick: F) {

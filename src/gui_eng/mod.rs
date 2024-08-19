@@ -45,7 +45,7 @@ macro_rules! panel {
                     $renderer,
                     $input,
                     $delta_time,
-                    &mut $element
+                    $element
                 );
             )*
         }

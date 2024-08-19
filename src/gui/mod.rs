@@ -1,12 +1,14 @@
 mod rigidbody_gui;
 mod constraint_guis;
 
-use std::collections::HashMap;
+use std::{collections::HashMap, fs};
 
 use chsl::{math::{unique_id::{self, unique_id}, vector2::Vector2}, physics::{bounding_box::BoundingBox, constraint::Constraint, rigidbody::RigidBody, world::PhysicsWorld}};
 use constraint_guis::ConstraintDebugGui;
 use rigidbody_gui::RigidBodyDebugGui;
 use sdl2::{keyboard::Keycode, mouse::MouseButton};
+use serde::{Deserialize, Serialize};
+use rmp_serde::{Deserializer, Serializer};
 
 use crate::{gui_eng::{button::ClickElement, mouse_over_panel, text_input::TextInput, toggle::ToggleGroup, DebugGui, DebugGuiLayout, Panel}, panel, renderer::Renderer, utils::input::Input};
 
@@ -34,6 +36,12 @@ pub struct AppUI {
     add_constraint: ClickElement,
     constraining_body_id_a: TextInput,
     constraining_body_id_b: TextInput,
+
+    file_panel: Panel,
+    file_panel_open: ClickElement,
+    file_panel_path: TextInput,
+    file_panel_load_button: ClickElement,
+    file_panel_save_button: ClickElement,
 }
 
 impl AppUI {
@@ -94,6 +102,19 @@ impl AppUI {
                ClickElement::new_toggle("Slide"), 
             ]),
             add_constraint: ClickElement::new_button("Add Constraint"),
+            file_panel: Panel::new(
+                BoundingBox {
+                    x: 50.0, 
+                    y: 500.0, 
+                    width: 200.0, 
+                    height: 0.0
+                },
+                "file_panel",
+            ),
+            file_panel_open: ClickElement::new_toggle("File"),
+            file_panel_path: TextInput::new("saves/", "Path"),
+            file_panel_load_button: ClickElement::new_button("Load"),
+            file_panel_save_button: ClickElement::new_button("Save"),
         }
     } 
 
@@ -167,10 +188,10 @@ impl AppUI {
             renderer,
             input,
             delta_time,
-            self.add_constraint_type,
-            self.add_constraint,
-            self.constraining_body_id_a,
-            self.constraining_body_id_b
+            &mut self.add_constraint_type,
+            &mut self.add_constraint,
+            &mut self.constraining_body_id_a,
+            &mut self.constraining_body_id_b
         );
 
         if self.add_constraint.just_clicked() {
@@ -182,12 +203,17 @@ impl AppUI {
 
                 }
                 Some("Fixed") => {
-
+                    physics_world.add_constraint(&unique_id(), Constraint::FixedJoint {
+                        body: self.constraining_body_id_a.get_value(),
+                        rotation: 0.0,
+                        position: Vector2::new(500.0, 500.0),
+                        strength: 0.01,
+                    })
                 }
                 Some("Slide") => {
                     physics_world.add_constraint(&unique_id(), Constraint::SlideJoint {
                         body: self.constraining_body_id_a.get_value(),
-                        angle: 0.0,
+                        rotation: 0.0,
                         position: Vector2::new(500.0, 500.0),
                         strength: 0.01,
                     })
@@ -213,14 +239,41 @@ impl AppUI {
             renderer,
             input,
             delta_time,
-            self.grab_button,
-            self.move_button,
-            self.static_body,
-            self.place_bodies,
-            self.view_debug_body,
-            self.constraints_panel_toggle,
-            self.hide
+            &mut self.grab_button,
+            &mut self.move_button,
+            &mut self.static_body,
+            &mut self.place_bodies,
+            &mut self.view_debug_body,
+            &mut self.constraints_panel_toggle,
+            &mut self.file_panel_open,
+            &mut self.hide
         );
+
+        self.file_panel.hidden = !self.file_panel_open.on();
+        
+        panel!(
+            self.file_panel,
+            renderer,
+            input,
+            delta_time,
+            &mut self.file_panel_path,
+            &mut self.file_panel_save_button,
+            &mut self.file_panel_load_button
+        );
+
+        if self.file_panel_save_button.just_clicked() {
+            let mut buf = Vec::new();
+            physics_world.serialize(&mut Serializer::new(&mut buf)).unwrap();
+            let path = self.file_panel_path.get_value();
+            fs::write(path, buf).expect("Unable to write to file or it doesn't exist");
+        }
+
+        if self.file_panel_load_button.just_clicked() {
+            let path = self.file_panel_path.get_value();
+            let contents = fs::read(path).unwrap();
+            let mut de = Deserializer::new(&contents[..]);
+            *physics_world = PhysicsWorld::deserialize(&mut de).expect("Yeehaa");
+        }
 
         if self.hide.just_clicked() {
             self.main_panel.hidden = true;
@@ -235,8 +288,8 @@ impl AppUI {
             renderer,
             input,
             delta_time,
-            self.bodies_id,
-            self.place_body_options
+            &mut self.bodies_id,
+            &mut self.place_body_options
         );
         
         if let Some(name) = self.place_bodies.active_toggle() {
